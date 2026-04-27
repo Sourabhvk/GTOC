@@ -102,7 +102,8 @@ class GestureDetector:
             wrist = self._point(hand, 0)
             yaw = self._palm_yaw(hand)
 
-            if self.state == "IDLE":
+            # Re-lock one-hand references when state changed from two-hand mode.
+            if self.state == "IDLE" or self.ref_wrist is None or self.ref_yaw is None:
                 self.state = "GRAB"
                 self.ref_wrist = wrist
                 self.ref_yaw = yaw
