@@ -1,0 +1,9 @@
+| CAD action     | Gesture                                | Intent name   | Trigger condition                     | Control output          |
+| -------------- | -------------------------------------- | ------------- | ------------------------------------- | ----------------------- |
+| Rotate         | 1 open hand, move left/right/up/down   | `ROTATE_VIEW` | Hand open + wrist/hand translation    | `dx, dy` rotation delta |
+| Zoom           | 2 hands pinch/spread                   | `ZOOM_VIEW`   | Distance between hands changes        | `zoom_delta`            |
+| Pan            | 1 closed fist, move left/right/up/down | `PAN_VIEW`    | Fist detected + hand translation      | `dx, dy` pan delta      |
+| Zoom to Fit    | Open palm held steady                  | `ZOOM_TO_FIT` | Palm visible + no movement for ~1 sec | One-shot command        |
+| Front View     | Point left swipe                       | `VIEW_FRONT`  | Point gesture + swipe left            | One-shot command        |
+| Top View       | Point up swipe                         | `VIEW_TOP`    | Point gesture + swipe up              | One-shot command        |
+| Isometric View | Thumbs-up                              | `VIEW_ISO`    | Thumbs-up detected                    | One-shot command        |
