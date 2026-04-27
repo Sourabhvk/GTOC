@@ -1,0 +1,8 @@
+Define the command contract and state model first so everything else has a stable interface. The core should own abstract commands, gesture lifecycle, smoothing state, and events, with no CAD-specific code.
+Build the vision pipeline next. Use OpenCV for webcam capture and MediaPipe Hands for 21-landmark extraction, then normalize each frame into a clean hand-observation object for the gesture layer.
+Implement rule-based gesture interpretation on top of those observations. Start with open hand, pinch, fist, and two-hand rotate, and add debounce, hysteresis, start/hold/release transitions, and cooldown handling to reduce flicker.
+Add the interaction abstraction layer that converts gestures into generic commands such as PAN, ROTATE, ZOOM, and SELECT. Keep this layer CAD-agnostic so it can be reused later.
+Implement the NX execution adapter as a thin bridge. It should receive abstract commands and translate them into NX Open viewport operations, without simulating mouse or keyboard input.
+Wire the runtime loop and configuration together. This includes camera settings, gesture thresholds, runtime logging, and a clean startup/shutdown path.
+Add tests around the stable boundaries first. Use synthetic landmark sequences for gesture tests, command-sink mocks for translation tests, and adapter mocks for NX dispatch behavior.
+Only after the navigation slice is stable, extend the same architecture toward selection and then any modeling actions.
