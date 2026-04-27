@@ -31,8 +31,8 @@ while True:
     result = hands.process(rgb)
 
     if result.multi_hand_landmarks:
+        # Draw landmarks for each detected hand.
         for hand_landmarks in result.multi_hand_landmarks:
-            # Draw landmarks and connections.
             mp_draw.draw_landmarks(
                 frame,
                 hand_landmarks,
@@ -41,20 +41,22 @@ while True:
                 mp_draw.DrawingSpec(color=(255, 0, 0), thickness=2),
             )
 
-            # Detect gesture label from landmarks.
-            gesture = gesture_detector.detect(hand_landmarks)
+        # Call the detector once with all detected hands; it returns a dict.
+        detection = gesture_detector.detect(result.multi_hand_landmarks)
 
-            # Overlay gesture text when available.
-            if gesture:
-                cv2.putText(
-                    frame,
-                    gesture,
-                    (50, 50),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    1,
-                    (0, 255, 0),
-                    2,
-                )
+        # Display the human-friendly label and log the full detection dict.
+        if detection and detection.get("display"):
+            cv2.putText(
+                frame,
+                detection["display"],
+                (50, 50),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                1,
+                (0, 255, 0),
+                2,
+            )
+
+        print(detection)
 
     # Show frame.
     cv2.imshow("Hand Tracking", frame)
