@@ -172,15 +172,38 @@ class GestureDetector:
         both_fist = self.is_fist(hand_a) and self.is_fist(hand_b)
 
         if both_open:
-            self._reset_two_hand_reference()
-            self.state = "IDLE"
+            if self.ref_two_hand_distance is None:
+                self.ref_two_hand_distance = distance
+                self.ref_two_hand_centroid = centroid
+
+                return self._result(
+                    state="GRAB",
+                    gesture="TWO_OPEN_HANDS",
+                    intent="TWO_HAND_REFERENCE_LOCKED",
+                    values={},
+                    display="TWO HAND REF LOCKED"
+                )
+
+            distance_delta = distance - self.ref_two_hand_distance
+
+            if abs(distance_delta) > self.zoom_deadzone:
+                return self._result(
+                    state="MANIPULATE",
+                    gesture="TWO_OPEN_HANDS",
+                    intent="ZOOM_VIEW",
+                    values={
+                        "zoom_delta": distance_delta * self.zoom_gain,
+                        "mode": "absolute_from_two_hand_reference"
+                    },
+                    display="ZOOM_VIEW"
+                )
 
             return self._result(
-                state="RELEASE",
+                state="GRAB",
                 gesture="TWO_OPEN_HANDS",
-                intent="RELEASE",
+                intent="TWO_HAND_REFERENCE_LOCKED",
                 values={},
-                display="TWO HAND RELEASE"
+                display="TWO HAND REF LOCKED"
             )
 
         if self.ref_two_hand_distance is None:
@@ -189,29 +212,14 @@ class GestureDetector:
 
             return self._result(
                 state="GRAB",
-                gesture="TWO_HAND_READY",
+                gesture="TWO_OPEN_HANDS",
                 intent="TWO_HAND_REFERENCE_LOCKED",
                 values={},
                 display="TWO HAND REF LOCKED"
             )
 
-        distance_delta = distance - self.ref_two_hand_distance
-
         centroid_dx = centroid["x"] - self.ref_two_hand_centroid["x"]
         centroid_dy = centroid["y"] - self.ref_two_hand_centroid["y"]
-
-        # Two hands moving apart/together = zoom
-        if abs(distance_delta) > self.zoom_deadzone:
-            return self._result(
-                state="MANIPULATE",
-                gesture="TWO_HAND_PINCH_SPREAD",
-                intent="ZOOM_VIEW",
-                values={
-                    "zoom_delta": distance_delta * self.zoom_gain,
-                    "mode": "absolute_from_two_hand_reference"
-                },
-                display="ZOOM_VIEW"
-            )
 
         # Two fists moving together = pan
         if both_fist and (
