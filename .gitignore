@@ -1,2 +1,4 @@
 venv/
-src/__pycache__/Gestures.cpython-312.pyc
+Log/
+src/__pycache__/
+*.pyc

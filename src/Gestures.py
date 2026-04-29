@@ -42,7 +42,8 @@ class GestureDetector:
         
         # One-hand open motion tracking
         self.open_hand_prev_pos = None
-        self.motion_threshold = 0.015  # Normalized distance to register motion (lowered for sensitivity)
+        # Lowered threshold to improve small-pan detection on webcams
+        self.motion_threshold = 0.008  # Normalized distance to register motion
 
     # -------------------------
     # Public API
@@ -75,6 +76,8 @@ class GestureDetector:
             )
 
         if len(hands) == 1:
+            # Debug: single-hand detection entry
+            print(f"DEBUG: detect() - 1 hand")
             return self._detect_one_hand(hands[0], handedness_list)
 
         if len(hands) >= 2:
@@ -125,7 +128,9 @@ class GestureDetector:
         """
         wrist = self._point(hand, 0)
 
+        # Debug: show current and previous wrist positions
         if self.open_hand_prev_pos is None:
+            print(f"DEBUG: open-hand first frame wrist=({wrist['x']:.4f},{wrist['y']:.4f})")
             self.open_hand_prev_pos = wrist
             return self._result(
                 state="TRACKING",
@@ -141,7 +146,14 @@ class GestureDetector:
 
         motion_mag = math.sqrt(dx * dx + dy * dy)
 
+        # Debug: motion values
+        print(
+            f"DEBUG: wrist_prev=({self.open_hand_prev_pos['x']:.4f},{self.open_hand_prev_pos['y']:.4f}) "
+            f"wrist_cur=({wrist['x']:.4f},{wrist['y']:.4f}) dx={dx:.5f} dy={dy:.5f} mag={motion_mag:.5f} threshold={self.motion_threshold:.5f}"
+        )
+
         if motion_mag < self.motion_threshold:
+            print("DEBUG: motion below threshold -> STILL")
             return self._result(
                 state="TRACKING",
                 gesture="ONE_HAND_OPEN",

@@ -1,5 +1,7 @@
 import cv2
 import mediapipe as mp
+import json
+from pathlib import Path
 import time
 
 from Gestures import GestureDetector
@@ -14,6 +16,11 @@ hands = mp_hands.Hands()
 gesture_detector = GestureDetector()
 pan_stabilizer = PanSignalStabilizer()
 
+log_dir = Path(__file__).resolve().parent.parent / "Log"
+log_dir.mkdir(parents=True, exist_ok=True)
+log_path = log_dir / f"gesture_log_started_{time.strftime('%Y-%m-%d_%H-%M-%S')}.log"
+log_file = log_path.open("a", encoding="utf-8")
+
 # Open default camera.
 # Higher capture size can expose more of the sensor area on some webcams.
 cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
@@ -26,6 +33,31 @@ last_console_time = 0.0
 last_display_time = 0.0
 console_interval_sec = 0.5
 display_interval_sec = 0.2
+
+
+def log_detection(now, detection, pan_data=None):
+    values = detection.get("values", {}) if detection else {}
+    values_blob = json.dumps(values, separators=(",", ":"), ensure_ascii=True)
+    parts = [
+        f"t={now:.3f}",
+        f"s={detection.get('state')}",
+        f"g={detection.get('gesture')}",
+        f"i={detection.get('intent')}",
+        f"d={detection.get('display')}",
+        f"v={values_blob}",
+    ]
+    if pan_data:
+        parts.extend(
+            [
+                f"px={pan_data.get('x', 0.0):.4f}",
+                f"py={pan_data.get('y', 0.0):.4f}",
+                f"pm={pan_data.get('magnitude', 0.0):.4f}",
+                f"pd={pan_data.get('direction')}",
+                f"ps={pan_data.get('stable')}",
+            ]
+        )
+    log_file.write("|".join(parts) + "\n")
+    log_file.flush()
 
 # Main loop: capture, detect, annotate, display.
 while True:
@@ -69,7 +101,13 @@ while True:
 
     if isinstance(intent, str) and intent.startswith("MOVE_"):
         values = detection.get("values", {})
-        smoothed_pan = pan_stabilizer.update(values.get("dx", 0.0), values.get("dy", 0.0))
+        dx = values.get("dx", 0.0)
+        dy = values.get("dy", 0.0)
+        smoothed_pan = pan_stabilizer.update(dx, dy)
+
+        # Lightweight debug: show motion and stabilizer output when MOVE detected.
+        print(f"DEBUG MOVE detected dx={dx:.4f} dy={dy:.4f} -> mag={smoothed_pan['magnitude']:.4f} dir={smoothed_pan['direction']} stable={smoothed_pan['stable']}")
+
         if smoothed_pan["stable"]:
             current_display_text = f"PAN {smoothed_pan['direction']}"
             display_text = current_display_text
@@ -118,6 +156,9 @@ while True:
         last_console_signature = console_signature
         last_console_time = now
 
+    if detection:
+        log_detection(now, detection, smoothed_pan if "smoothed_pan" in locals() else None)
+
     # Show frame.
     cv2.imshow("Hand Tracking", frame)
 
@@ -128,3 +169,4 @@ while True:
 # Cleanup.
 cap.release()
 cv2.destroyAllWindows()
+log_file.close()

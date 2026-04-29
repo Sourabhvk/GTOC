@@ -1,3 +1,6 @@
+import math
+
+
 class PanSignalStabilizer:
     """
     PID-like stabilizer for pan-style motion signals.
@@ -6,7 +9,7 @@ class PanSignalStabilizer:
     and returns a stable direction label for display or downstream control.
     """
 
-    def __init__(self, kp=0.65, ki=0.05, kd=0.18, deadzone=0.01, output_limit=1.0):
+    def __init__(self, kp=0.65, ki=0.05, kd=0.18, deadzone=0.005, output_limit=1.0):
         self.kp = kp
         self.ki = ki
         self.kd = kd
@@ -67,10 +70,8 @@ class PanSignalStabilizer:
 
         if not stable:
             direction = "STILL"
-        elif abs(output_x) > abs(output_y):
-            direction = "RIGHT" if output_x > 0 else "LEFT"
         else:
-            direction = "DOWN" if output_y > 0 else "UP"
+            direction = self._direction_from_vector(output_x, output_y)
 
         return {
             "x": output_x,
@@ -82,3 +83,22 @@ class PanSignalStabilizer:
 
     def _clamp(self, value, low, high):
         return max(low, min(high, value))
+
+    def _direction_from_vector(self, x, y):
+        angle = math.degrees(math.atan2(-y, x))
+
+        if -22.5 <= angle < 22.5:
+            return "RIGHT"
+        if 22.5 <= angle < 67.5:
+            return "TOP RIGHT"
+        if 67.5 <= angle < 112.5:
+            return "TOP"
+        if 112.5 <= angle < 157.5:
+            return "TOP LEFT"
+        if angle >= 157.5 or angle < -157.5:
+            return "LEFT"
+        if -157.5 <= angle < -112.5:
+            return "BOTTOM LEFT"
+        if -112.5 <= angle < -67.5:
+            return "BOTTOM"
+        return "BOTTOM RIGHT"
