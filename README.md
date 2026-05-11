@@ -52,7 +52,7 @@ GTOC/
 
 ## Requirements
 
-- Python 3
+- Python 3.8-3.11
 - Webcam
 - MediaPipe and OpenCV dependencies
 - Optional: Siemens NX / NX Open session for real command execution
@@ -63,7 +63,7 @@ Install the listed dependencies from the repository root:
 pip install -r requirements.txt
 ```
 
-> `requirements.txt` currently pins `mediapipe==0.10.14`. OpenCV is also required by the source code and may need to be installed separately if it is not already present in your environment.
+> `requirements.txt` pins `mediapipe==0.10.14`, which supports Python 3.8-3.11.
 
 ## Running the project
 
